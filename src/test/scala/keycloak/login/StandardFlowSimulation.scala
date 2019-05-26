@@ -1,22 +1,33 @@
 package keycloak.login
 
 import java.util.UUID
+import java.util.concurrent.ThreadLocalRandom
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class StandardFlowSimulation extends Simulation {
   val keycloakUrl = "http://localhost:10080/auth"
+  val realm = "gatling"
+
+  val keycloakUserCount = 1
+  val keycloakClientCount = 1
 
   val httpProtocol = http
     .baseUrl(keycloakUrl)
     .disableFollowRedirect
 
-  val realm = "gatling"
 
-  val feeder = Array(
-    Map("userName" -> "user", "clientId" -> "gatling-app", "redirectUrl" -> "http://gatling-client-app/sso/login", "logoutUrl" -> "http://gatling-client-app/logout")
-  ).queue
+  val feeder = Iterator.continually({
+    val randomUserId = ThreadLocalRandom.current().nextInt(keycloakUserCount)
+    val randomClientId = ThreadLocalRandom.current().nextInt(keycloakClientCount)
+    Map(
+      "userName" -> s"user-$randomUserId",
+      "clientId" -> s"client-app-$randomClientId",
+      "redirectUrl" -> s"http://client-app-$randomClientId/sso/login",
+      "logoutUrl" -> s"http://client-app-$randomClientId/logout"
+    )
+  })
 
 
   object Keycloak {
