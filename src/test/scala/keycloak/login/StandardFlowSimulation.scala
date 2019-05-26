@@ -7,6 +7,9 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class StandardFlowSimulation extends Simulation {
+  val concurrentUserCount = 150
+  val simulationDuration = 60 * 5 // five minutes
+
   val keycloakUrl = "http://localhost:10080/auth"
   val realm = "gatling"
 
@@ -89,6 +92,6 @@ class StandardFlowSimulation extends Simulation {
 
 
   setUp(
-    keycloakStandardFlow.inject(atOnceUsers(1))
+    keycloakStandardFlow.inject(constantConcurrentUsers(concurrentUserCount) during (simulationDuration))
   ).protocols(httpProtocol)
 }
