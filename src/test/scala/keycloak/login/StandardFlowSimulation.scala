@@ -1,6 +1,5 @@
 package keycloak.login
 
-import java.net.URLEncoder
 import java.util.UUID
 
 import io.gatling.core.Predef._
@@ -14,16 +13,17 @@ class StandardFlowSimulation extends Simulation {
     .disableFollowRedirect
 
   val realm = "gatling"
-  val clientId = "gatling-app"
 
-  val redirectUrl = "http://gatling-client-app/sso/login"
-  val logoutRedirect = "http://gatling-client-app/logout"
+  val feeder = Array(
+    Map("userName" -> "user", "clientId" -> "gatling-app", "redirectUrl" -> "http://gatling-client-app/sso/login", "logoutUrl" -> "http://gatling-client-app/logout")
+  ).queue
+
 
   object Keycloak {
     val loadLoginPage = exec(http("keycloak_get_login-page")
       .get(s"/realms/$realm/protocol/openid-connect/auth")
-      .queryParam("client_id", clientId)
-      .queryParam("redirect_uri", redirectUrl)
+      .queryParam("client_id", "${clientId}")
+      .queryParam("redirect_uri", "${redirectUrl}")
       .queryParam("state", UUID.randomUUID().toString())
       .queryParam("nonce", UUID.randomUUID().toString())
       .queryParam("response_type", "code")
@@ -38,7 +38,7 @@ class StandardFlowSimulation extends Simulation {
 
     val authenticate = exec(http("keycloak_post_authentication")
       .post("${auth_url}")
-      .formParam("username", "user")
+      .formParam("username", "${userName}")
       .formParam("password", "user")
       .check(status.is(302))
       .check(header("Location").transform(l => {
@@ -53,20 +53,21 @@ class StandardFlowSimulation extends Simulation {
       .post(s"/realms/$realm/protocol/openid-connect/token")
       .formParam("grant_type", "authorization_code")
       .formParam("code", "${code}")
-      .formParam("client_id", clientId)
-      .formParam("redirect_uri", redirectUrl)
+      .formParam("client_id", "${clientId}")
+      .formParam("redirect_uri", "${redirectUrl}")
       .check(status.is(200))
       .check(jsonPath("$..access_token").exists)
     )
 
     val logout = exec(http("client-application_get_logout")
-      .get(s"/realms/$realm/protocol/openid-connect/logout?redirect_uri=${URLEncoder.encode(logoutRedirect, "UTF-8")}")
+      .get("/realms/" + realm + "/protocol/openid-connect/logout?redirect_uri=${logoutUrl}")
       .check(status.is(302))
-      .check(header("Location").is(logoutRedirect))
+      .check(header("Location").is("${logoutUrl}"))
     )
   }
 
   val keycloakStandardFlow = scenario("keycloak-standard-flow")
+    .feed(feeder)
     .exec(Keycloak.loadLoginPage)
     .pause(5)
     .exec(Keycloak.authenticate)
