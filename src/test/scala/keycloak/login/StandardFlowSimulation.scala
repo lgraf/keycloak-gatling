@@ -7,14 +7,14 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class StandardFlowSimulation extends Simulation {
-  val concurrentUserCount = 5
-  val simulationDuration = 30 // seconds
+  val concurrentUserCount = default("concurrentUsers", 5)
+  val simulationDuration = default("duration", 30) // seconds
 
-  val keycloakUrl = "http://localhost:10080/auth"
-  val realm = "gatling"
+  val keycloakUrl = default("keycloakUrl", "http://localhost:10080/auth")
+  val realm = default("keycloakRealm", "gatling")
 
-  val keycloakUserCount = 5
-  val keycloakClientCount = 3
+  val keycloakUserCount = default("keycloakUsers", 5)
+  val keycloakClientCount = default("keycloakClients", 3)
 
   val httpProtocol = http
     .baseUrl(keycloakUrl)
@@ -94,4 +94,16 @@ class StandardFlowSimulation extends Simulation {
   setUp(
     keycloakStandardFlow.inject(constantConcurrentUsers(concurrentUserCount) during (simulationDuration))
   ).protocols(httpProtocol)
+
+
+  def default[T](option: String, defaultValue: T): T = {
+    if (System.getProperty(option) == null)
+      return defaultValue
+
+    (defaultValue match {
+      case t: String => System.getProperty(option)
+      case t: Int => System.getProperty(option).toInt
+      case t@_ => throw new IllegalArgumentException("unsupported type")
+    }).asInstanceOf[T]
+  }
 }
