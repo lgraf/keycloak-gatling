@@ -84,9 +84,11 @@ class StandardFlowSimulation extends Simulation {
     .feed(feeder)
     .exec(Keycloak.loadLoginPage)
     .pause(5)
-    .exec(Keycloak.authenticate)
-    .pause(1)
-    .exec(ClientApplication.codeToToken)
+    .group("authentication-round-trip") {
+      exec(Keycloak.authenticate)
+        .pause(1)
+        .exec(ClientApplication.codeToToken)
+    }
     .pause(10)
     .exec(ClientApplication.logout)
 
