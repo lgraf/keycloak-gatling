@@ -7,14 +7,14 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class StandardFlowSimulation extends Simulation {
-  val concurrentUserCount = 150
-  val simulationDuration = 60 * 5 // five minutes
+  val concurrentUserCount = 5
+  val simulationDuration = 30 // seconds
 
   val keycloakUrl = "http://localhost:10080/auth"
   val realm = "gatling"
 
-  val keycloakUserCount = 1
-  val keycloakClientCount = 1
+  val keycloakUserCount = 5
+  val keycloakClientCount = 3
 
   val httpProtocol = http
     .baseUrl(keycloakUrl)
@@ -22,8 +22,8 @@ class StandardFlowSimulation extends Simulation {
 
 
   val feeder = Iterator.continually({
-    val randomUserId = ThreadLocalRandom.current().nextInt(keycloakUserCount)
-    val randomClientId = ThreadLocalRandom.current().nextInt(keycloakClientCount)
+    val randomUserId = ThreadLocalRandom.current().nextInt(keycloakUserCount - 1)
+    val randomClientId = ThreadLocalRandom.current().nextInt(keycloakClientCount - 1)
     Map(
       "userName" -> s"user-$randomUserId",
       "clientId" -> s"client-app-$randomClientId",
