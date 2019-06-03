@@ -30,6 +30,7 @@ The keycloak server credentials can be configured in `keycloak-data-setup/login.
 `keycloak-data-setup/create-clients.sh NUM` (default: 3)  
 `keycloak-data-setup/create-users.sh NUM` (default: 5)
 
+Please note that this script will create users with an easy to guess usernames and fixed passwords, so **dont** use this with a public facing installation.
 
 ### Run the Simulation
 
